@@ -1,0 +1,147 @@
+/* General body and container styling for a clean, centered layout */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 20px;
+  background-color: #f0f4f8; /* Light gray-blue background */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px; /* Space between major sections */
+}
+
+/* Main container for all content to apply a card-like effect */
+.main-container {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 800px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+h2 {
+  color: #555;
+  margin-top: 20px;
+  margin-bottom: 10px;
+}
+
+/* Video and Canvas container to handle overlay */
+.video-container {
+  position: relative;
+  width: 100%; /* Make the container responsive */
+  max-width: 640px; /* Match video width */
+  margin-bottom: 20px; /* Add space below the video area */
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.video-container video,
+.video-container canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Ensure canvas is perfectly aligned over the video */
+#output_canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1; /* Place canvas on top of the video */
+}
+
+/* Styling for buttons and form elements */
+button, select {
+  margin: 5px;
+  padding: 12px 24px;
+  font-size: 16px;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+button {
+  background-color: #007bff; /* Blue for primary actions */
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 123, 255, 0.2);
+}
+
+button:disabled {
+  background-color: #b0c4de;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:hover:not(:disabled) {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+select {
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+}
+
+/* Status and Results sections */
+#status, #results {
+  width: 100%;
+}
+
+#statusText {
+  font-size: 1.2em;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+#results pre {
+  background: #f0f0f0;
+  padding: 20px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  text-align: left;
+  line-height: 1.6;
+  border: 1px solid #e0e0e0;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+}
+
+/* New CSS for dynamic elements */
+#timer {
+  font-size: 2.5em;
+  color: #333;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+#go-flash {
+  font-size: 5em;
+  color: #e74c3c;
+  animation: flash 1s infinite alternate;
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+}
+
+.hidden {
+  display: none;
+}
+
+@keyframes flash {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+

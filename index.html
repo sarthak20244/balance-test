@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Balance & Mobility Tests</title>
+
+  <!-- Modern font -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- MediaPipe (unchanged) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5/pose.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+
+  <style>
+    /* Reset */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Page base */
+    body {
+      font-family: 'Poppins', system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f6f8fb;
+      color: #1f2933;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+      color: #13293a;
+      margin-bottom: 18px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+    }
+
+    /* Main two-column layout */
+    .main-container {
+      width: 100%;
+      max-width: 1400px;
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-x: auto; /* prevent left panel pushing the right off-screen */
+      padding-bottom: 12px;
+    }
+
+    /* LEFT: large live view container (visual only) */
+    .video-container {
+      width: 1024px;   /* visually large: 640 * 1.6 */
+      height: 768px;   /* visually large: 480 * 1.6 */
+      border-radius: 14px;
+      background: #000;
+      box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
+      position: relative;
+      overflow: hidden;
+      flex-shrink: 0; /* keep it from shrinking and overlaying the right panel */
+    }
+
+    /* Keep element attributes at 640x480 (MediaPipe untouched),
+       but visually fill the larger container via CSS so markers remain based on 640x480 */
+    #video, #output_canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;     /* scale display to container */
+      height: 100%;    /* scale display to container */
+      object-fit: cover;
+      display: block;
+    }
+
+    /* Canvas overlay should not block clicks; keeps drawing on top */
+    #output_canvas {
+      pointer-events: none;
+      z-index: 2;
+      background: transparent;
+    }
+
+    #video {
+      z-index: 1;
+      background: transparent;
+    }
+
+    /* RIGHT: controls, instructions, status, results */
+    .info-panel {
+      flex: 0 0 360px; /* fixed-ish column so results remain visible */
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 14px 16px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(2,6,23,0.04);
+      text-align: left;
+    }
+
+    .card h2 {
+      font-size: 1.12rem;
+      margin-bottom: 8px;
+      color: #12324a;
+      font-weight: 600;
+    }
+
+    .card p {
+      color: #4b5563;
+      font-size: 0.98rem;
+      line-height: 1.45;
+    }
+
+    label {
+      font-weight: 600;
+      color: #12324a;
+      margin-right: 8px;
+    }
+
+    select {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid #e6edf3;
+      font-size: 1rem;
+      font-weight: 500;
+      background: #fff;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+    #startBtn { background:#2ecc71; }
+    #stopBtn  { background:#e74c3c; }
+    #prevBtn, #nextBtn { background:#3498db; }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .hidden { display: none; }
+
+    #timer { font-size: 1.4rem; font-weight: 700; margin-top: 8px; color: #0f2b3a; }
+    #go-flash { font-size: 1.2rem; font-weight: 800; color: #2ecc71; animation: flash 1s infinite; }
+    @keyframes flash { 0%,100%{opacity:1}50%{opacity:0} }
+
+    pre {
+      background: #fbfdff;
+      padding: 12px;
+      border-radius: 8px;
+      color: #0f2b3a;
+      font-size: 0.95rem;
+      overflow-x: auto;
+    }
+
+    /* Ensure results card sits above visual artefacts if any */
+    #results { position: relative; z-index: 5; }
+
+    /* Responsive: stack and scale nicely */
+    @media (max-width: 1200px) {
+      .main-container { flex-direction: column; align-items: center; gap: 18px; }
+      .video-container { width: 100%; max-width: 900px; height: auto; aspect-ratio: 4/3; }
+      .info-panel { width: 100%; max-width: 900px; flex: none; min-width: auto; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Balance & Mobility Tests</h1>
+
+  <div class="main-container">
+    <!-- LEFT: Live view (attributes kept at 640x480) -->
+    <div class="video-container">
+      <video id="video" width="640" height="480" autoplay muted playsinline></video>
+      <canvas id="output_canvas" width="640" height="480"></canvas>
+    </div>
+
+    <!-- RIGHT: Controls & info -->
+    <div class="info-panel">
+      <div class="card">
+        <label for="testSelect">Select Test:</label>
+        <select id="testSelect">
+          <option value="mctisb">mCTISB Test</option>
+          <option value="tug">TUG Test</option>
+          <option value="chair">Chair Stand Test</option>
+        </select>
+      </div>
+
+      <div class="card" id="instructions">
+        <h2>Instructions</h2>
+        <p id="instrText">Select a test to see instructions</p>
+      </div>
+
+      <div class="card">
+        <div class="controls-row">
+          <button id="startBtn">Start Test</button>
+          <button id="stopBtn" disabled>Stop Test</button>
+          <button id="prevBtn" class="hidden">Previous Condition</button>
+          <button id="nextBtn" class="hidden">Next Condition</button>
+        </div>
+      </div>
+
+      <div class="card" id="status">
+        <h2>Test Status</h2>
+        <p id="statusText"></p>
+        <div id="timer"></div>
+        <div id="go-flash" class="hidden">GO!</div>
+      </div>
+
+      <div class="card" id="results">
+        <h2>Results</h2>
+        <pre id="resultText"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Keep your app.js unchanged -->
+  <script src="app.js"></script>
+</body>
+</html>
